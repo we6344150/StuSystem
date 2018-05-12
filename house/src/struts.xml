@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts PUBLIC
+	"-//Apache Software Foundation//DTD Struts Configuration 2.3//EN"
+	"http://struts.apache.org/dtds/struts-2.3.dtd">
+	<struts>
+	<constant name="struts.enable.DynamicMethodInvocation" value="false" />
+	<!-- 开发模式，在页面提交的时候可以看到详细的错误，要不然就会出现500那种http错误，tomacat给的错误 -->
+	<constant name="struts.devMode" value="true" />
+	<!-- 配置struts2框架的编码格式 -->
+	<constant name="struts.i18n.encoding" value="utf-8" />
+	<!-- 建议在开发阶段打开这个配置，目的实现配置文件内容发生变化的时候不需要重启中间件 -->
+	<constant name="struts.configuration.xml.reload" value="true"/>	
+	<!--下面这个定义整个项目文件上传最大 字节 ，而且0字节的东西不允许上传-->
+	<constant name="struts.multipart.maxSize" value="5000000"/>
+   
+   
+	<package name="houseUser" namespace="/" extends="struts-default">
+<!-- 	<global-results>
+	<result name="manage" type="redirect">manage.jsp</result>
+	</global-results> -->
+	<action name="loginRedirect">
+     <result>index.jsp</result>
+     </action>
+	<action name="manage" class="ManageAction" method="manage">
+	<result name="manage" >manage.jsp</result>
+	</action>
+	<action name="login" class="HouseUserAction" method="login">
+     <result name="input" type="redirectAction">loginRedirect</result>
+    <!-- 上面这个方式就是实现了跳转的方式不会出现.jsp这种形式 -->
+     <result name="success" type="redirect">manage.jsp</result>
+    </action>
+	<action name="register" class="HouseUserAction" method="register">
+	 <result name="input" type="redirect">register.jsp</result>
+     <result name="success" type="redirect">manage.jsp</result>
+	</action>
+	<action name="checkUserName" class="HouseUserAction" method="checkUserName">
+	<result name="input" >register.jsp</result>
+	</action>
+	<action name="loginAjax" class="HouseUserAction" method="loginAjax">
+	<result name="input" type="redirect">manage.jsp</result>
+	</action>
+	</package>
+	<package name="house" namespace="/" extends="struts-default">
+	<action name="list" class="HouseAction" method="findByPage">
+	<result name="manage" >manage.jsp</result>
+	</action> 
+	<action name="addHouse" class="HouseAction" method="addHouse">
+	<result name="add" >add_house.jsp</result>
+	</action>
+	<action name="doAddHouse" class="HouseAction" method="doAddHouse">
+	<result name="doAdd" type="redirect">manage.jsp</result>
+	</action>
+	<action name="delete" class="HouseAction" method="delete">
+	<result name="delete" type="redirectAction">loginRedirect</result>
+	</action>
+	<action name="initUpdate" class="HouseAction" method="initUpdate">
+	<result name="initUpdate" >updateHouse.jsp</result>
+	</action>
+	<action name="updateHouse" class="HouseAction" method="updateHouse">
+	<result name="updateHouse" type="redirectAction">loginRedirect</result>
+	</action>
+	</package>
+	<!-- ajax -->
+	<package name="ajax" namespace="/" extends="struts-default,json-default">
+	</package>
+	</struts>

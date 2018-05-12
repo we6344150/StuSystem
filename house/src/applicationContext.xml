@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans.xsd
+	http://www.springframework.org/schema/aop
+	http://www.springframework.org/schema/aop/spring-aop.xsd
+	http://www.springframework.org/schema/tx
+	http://www.springframework.org/schema/tx/spring-tx.xsd">
+	    <!-- 数据源hibernate的管理，通过spring框架完成 --> 
+	    <bean name="dataSource" class="org.apache.commons.dbcp.BasicDataSource">
+	    <property name="driverClassName" value="oracle.jdbc.OracleDriver"></property>
+	    <property name="url" value="jdbc:oracle:thin:@localhost:1521:xe"></property>
+	    <property name="username" value="house"></property>
+	    <property name="password" value="house"></property>
+	    <!-- 最大对话session连接数，最大活动数 -->
+	    <property name="maxActive" value="100"></property>
+	    <!-- 最大处理数 -->
+	    <property name="maxIdle" value="10"></property>
+	    <!-- 最长等待时间 ,1秒-->
+	    <property name="maxWait" value="1000"></property>
+	    <!-- 配置数据库方言，通过spring框架实现 -->
+	    </bean>
+	    <bean name="sessionFactory" class="org.springframework.orm.hibernate3.LocalSessionFactoryBean">
+	     <!-- 向session工厂类注入数据源，ref指向前面的数据源，关联了工厂类和数据源配置文件 -->
+	    <property name="dataSource" ref="dataSource"></property>
+	    <!-- 配置数据方言 -->
+	    <property name="hibernateProperties">
+	    <props>
+	    	<prop key="hibernate.dialect">org.hibernate.dialect.Oracle10gDialect</prop>
+	    	<!-- 格式化sql -->
+			<prop key="hibernate.format_sql">true</prop>
+			<!-- 显示sql -->
+			<prop key="hibernate.show_sql">true</prop>
+	    </props>
+	    </property>
+	    <!-- 加载ORM配置文件 -->
+	    <property name="mappingDirectoryLocations">
+	    	<list>
+	    	<!-- 耍流氓就写了entity包没具体写哪个类 -->
+				<value>classpath:cn/bdqn/house/entity/</value>
+			</list>
+	    </property>
+	    </bean>
+	    <!-- 利用spring框架ioc注入service或者struts需要的对象 -->
+	    <!-- 把数据源注入到dao中 -->
+	    <bean name="userDao" class="cn.bdqn.house.dao.impl.HouseUserDaoImpl">
+	    <property name="sessionFactory" ref="sessionFactory"></property>
+	    </bean>
+	     <bean name="userService" class="cn.bdqn.house.service.impl.HouseUserServiceImpl" >
+	    <property name="userDao" ref="userDao"></property>
+	    </bean>
+	    <bean name="houseDao" class="cn.bdqn.house.dao.impl.HouseDaoImpl">
+	    <property name="sessionFactory" ref="sessionFactory"></property>
+	    </bean>
+	     <bean name="houseService" class="cn.bdqn.house.service.impl.HouseServiceImpl" >
+	    <property name="houseDao" ref="houseDao"></property>
+	    </bean>
+	    <!-- 把service注入到action中 -->
+	    <!-- 做spring框架与struts框架整合 -->
+	    <!-- id起个名交给struts配置文件进行调用id直接指向action类 -->
+	 
+	    <bean id="ManageAction" class="cn.bdqn.house.action.ManageAction" scope="prototype">
+	    <property name="houseService" ref="houseService"></property>
+	    </bean>
+	    <bean id="HouseUserAction" class="cn.bdqn.house.action.HouseUserAction" scope="prototype">
+	    <!--class="cn.bdqn.ssh.action.HouseUserAction"这个类中需要的userService属性依赖下面这个spring框架完成 -->
+	    <property name="userService" ref="userService"></property>
+	    <!-- ref指向上面配置的userService，name属性供给action进行调用，name起得userService，get 、set方法中就是依赖着这个spring对象进行注入 -->
+	    </bean>
+	    <bean id="HouseAction" class="cn.bdqn.house.action.HouseAction" scope="prototype">
+	    <property name="houseService" ref="houseService"></property>
+	    </bean>
+	    <!-- 配置aop1.配置事务管理器 ,p:sessionFactory-ref=""这种方式可以对应上面那个p地址标签-->
+	    <bean id="txMgr" class="org.springframework.orm.hibernate3.HibernateTransactionManager" >
+	    <property name="sessionFactory" ref="sessionFactory"></property>
+	    </bean>
+	    <!-- 声明事务处理的实现内容 -->
+	    <tx:advice id="txAdv" transaction-manager="txMgr">
+	    <tx:attributes>
+	    <tx:method name="get*"/>
+	    <tx:method name="save*"/>
+	    <!-- 以get开头的，以save开头的  类-->
+	    <tx:method name="*"/>
+	    </tx:attributes>
+	    </tx:advice>
+	    <!-- 设置切面 。切点，实现事务处理的实现范围 ,.包.子包（所有类）-->
+	    <aop:config>
+	    <aop:pointcut id="pnt" expression="execution(public * cn.bdqn.house.service..*(..))" />
+	    <!-- 增强型切入点设置 -->
+	    <aop:advisor advice-ref="txAdv" pointcut-ref="pnt"/>
+	    </aop:config>
+</beans>
